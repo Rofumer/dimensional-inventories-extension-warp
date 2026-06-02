@@ -5,7 +5,10 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.thomilist.dimensionalinventories.DimensionalInventories;
+import net.thomilist.dimensionalinventories.exception.ModuleNotRegisteredException;
 import net.thomilist.dimensionalinventories.extension.warp.command.WarpCommand;
+import net.thomilist.dimensionalinventories.module.builtin.pool.DimensionPoolConfigModule;
 import net.thomilist.dimensionalinventories.util.ModProperties;
 
 public class DimensionalInventoriesExtensionWarp
@@ -35,9 +38,24 @@ public class DimensionalInventoriesExtensionWarp
         } );
 
         // When a player changes dimension (portal or /warp), save their origin position
+        // and update which dimension in the pool they were last in
         ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register(
             ( player, origin, destination ) ->
-                this.positionStore.onPlayerChangedDimension( player, origin ) );
+            {
+                this.positionStore.onPlayerChangedDimension( player, origin );
+
+                final String originDimId = origin.dimension().identifier().toString();
+                try
+                {
+                    DimensionalInventories.INSTANCE.configModules
+                        .get( DimensionPoolConfigModule.class )
+                        .state()
+                        .poolWithDimension( originDimId )
+                        .ifPresent( pool -> this.positionStore.setLastDimensionInPool(
+                            player.getUUID(), pool.getId(), originDimId ) );
+                }
+                catch ( final ModuleNotRegisteredException ignored ) { }
+            } );
 
         new WarpCommand( this.positionStore ).register();
     }

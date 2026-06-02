@@ -65,22 +65,41 @@ src/
 
 1. `ServerTickEvents.END_SERVER_TICK` — snapshots every online player's current position+dimension into an in-memory cache each tick.
 2. Before calling `player.teleport()` in `WarpCommand` — manually snapshots exact current position (overrides tick cache for precision).
-3. `ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL` — fires after any dimension change (portal or `/warp`). Reads the cache for the origin dimension and writes to the persistent store.
+3. `ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL` — fires after any dimension change (portal or `/warp`). Reads the cache for the origin dimension and writes to the persistent store. Also updates "last dimension in pool" for the origin dimension's pool.
 4. `ServerPlayConnectionEvents.JOIN` — loads the player's JSON file into memory when they connect.
 5. Data is saved to `<world>/dimensional-inventories-extension-warp/<uuid>.json` after every write.
 
-On warp: if a stored position exists for the target dimension → use it. Otherwise → fall back to `level.getRespawnData().pos()` (world spawn) projected to surface height.
+On warp to pool: look up `lastDimensionInPool[poolId]` → teleport to that dimension at last known coordinates. If no record, use first dimension in pool at world spawn.
+
+### JSON save format (v2)
+
+```json
+{
+  "positions": {
+    "minecraft:overworld": { "x": 128.5, "y": 64.0, "z": -200.5, "yRot": 90.0, "xRot": 0.0 }
+  },
+  "lastDimensionInPool": {
+    "default": "minecraft:overworld"
+  }
+}
+```
+
+Old format (positions at root level, no `positions` wrapper) is loaded for backward compatibility and re-saved in the new format.
 
 ## Commands
 
 Both trees share the same Brigadier node (no logic duplication):
 
 ```
-/warp <dimension>                     — teleport self (permission level 4)
-/warp player <player> <dimension>     — teleport another player
-/diminv warp <dimension>              — same, merged into main mod's /diminv tree
-/diminv warp player <player> <dimension>
+/warp <pool>                          — teleport self to a pool (permission level 4)
+/warp player <player> <pool>          — teleport another player to a pool
+/diminv warp <pool>                   — same, merged into main mod's /diminv tree
+/diminv warp player <player> <pool>
 ```
+
+`<pool>` is a pool ID from Dimensional Inventories config (string, autocompleted from live pool list).
+On warp to pool: teleports to the last dimension the player was in within that pool, or falls back to the
+first dimension in the pool (sorted). Fails if the player is already in a dimension belonging to that pool.
 
 ## Main mod API surface used
 

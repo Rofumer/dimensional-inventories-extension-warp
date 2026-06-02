@@ -22,6 +22,9 @@ public class WarpPositionStore
     // playerUUID -> ( dimensionId -> PositionRecord )
     private final Map<UUID, Map<String, PositionRecord>> store = new ConcurrentHashMap<>();
 
+    // playerUUID -> ( poolId -> dimensionId ) — last dimension visited per pool
+    private final Map<UUID, Map<String, String>> lastDimensionInPool = new ConcurrentHashMap<>();
+
     // Last-known position per player, updated every tick and manually before /warp
     private final Map<UUID, PositionSnapshot> cache = new ConcurrentHashMap<>();
 
@@ -63,6 +66,20 @@ public class WarpPositionStore
         }
     }
 
+    // Record which dimension within a pool the player was last in
+    public void setLastDimensionInPool( final UUID playerUUID, final String poolId, final String dimensionId )
+    {
+        this.lastDimensionInPool.computeIfAbsent( playerUUID, k -> new HashMap<>() ).put( poolId, dimensionId );
+        this.persist( playerUUID );
+    }
+
+    public Optional<String> getLastDimensionInPool( final UUID playerUUID, final String poolId )
+    {
+        final Map<String, String> playerPools = this.lastDimensionInPool.get( playerUUID );
+        if ( playerPools == null ) return Optional.empty();
+        return Optional.ofNullable( playerPools.get( poolId ) );
+    }
+
     public Optional<PositionRecord> get( final UUID playerUUID, final ResourceKey<Level> dimension )
     {
         final Map<String, PositionRecord> playerData = this.store.get( playerUUID );
@@ -82,9 +99,31 @@ public class WarpPositionStore
             final JsonObject root = GSON.fromJson( reader, JsonObject.class );
             if ( root == null ) return;
 
-            final Map<String, PositionRecord> playerMap = new HashMap<>();
+            // Support both old format (dimension keys at root) and new format (with "positions" wrapper)
+            final JsonObject positionsObj;
+            if ( root.has( "positions" ) )
+            {
+                positionsObj = root.getAsJsonObject( "positions" );
 
-            for ( final Map.Entry<String, JsonElement> entry : root.entrySet() )
+                if ( root.has( "lastDimensionInPool" ) )
+                {
+                    final Map<String, String> poolMap = new HashMap<>();
+                    for ( final Map.Entry<String, JsonElement> entry :
+                        root.getAsJsonObject( "lastDimensionInPool" ).entrySet() )
+                    {
+                        poolMap.put( entry.getKey(), entry.getValue().getAsString() );
+                    }
+                    this.lastDimensionInPool.put( playerUUID, poolMap );
+                }
+            }
+            else
+            {
+                // Old format: dimension keys at root level
+                positionsObj = root;
+            }
+
+            final Map<String, PositionRecord> playerMap = new HashMap<>();
+            for ( final Map.Entry<String, JsonElement> entry : positionsObj.entrySet() )
             {
                 final JsonObject pos = entry.getValue().getAsJsonObject();
                 playerMap.put( entry.getKey(), new PositionRecord(
@@ -95,7 +134,6 @@ public class WarpPositionStore
                     pos.get( "xRot" ).getAsFloat()
                 ) );
             }
-
             this.store.put( playerUUID, playerMap );
         }
         catch ( final IOException ignored ) { }
@@ -110,20 +148,38 @@ public class WarpPositionStore
     private void persist( final UUID playerUUID )
     {
         if ( this.saveDirectory == null ) return;
-        final Map<String, PositionRecord> playerData = this.store.get( playerUUID );
-        if ( playerData == null ) return;
 
         final JsonObject root = new JsonObject();
-        for ( final Map.Entry<String, PositionRecord> entry : playerData.entrySet() )
+
+        // Positions
+        final JsonObject positions = new JsonObject();
+        final Map<String, PositionRecord> playerData = this.store.get( playerUUID );
+        if ( playerData != null )
         {
-            final JsonObject pos = new JsonObject();
-            pos.addProperty( "x", entry.getValue().x() );
-            pos.addProperty( "y", entry.getValue().y() );
-            pos.addProperty( "z", entry.getValue().z() );
-            pos.addProperty( "yRot", entry.getValue().yRot() );
-            pos.addProperty( "xRot", entry.getValue().xRot() );
-            root.add( entry.getKey(), pos );
+            for ( final Map.Entry<String, PositionRecord> entry : playerData.entrySet() )
+            {
+                final JsonObject pos = new JsonObject();
+                pos.addProperty( "x", entry.getValue().x() );
+                pos.addProperty( "y", entry.getValue().y() );
+                pos.addProperty( "z", entry.getValue().z() );
+                pos.addProperty( "yRot", entry.getValue().yRot() );
+                pos.addProperty( "xRot", entry.getValue().xRot() );
+                positions.add( entry.getKey(), pos );
+            }
         }
+        root.add( "positions", positions );
+
+        // Last dimension per pool
+        final JsonObject poolDims = new JsonObject();
+        final Map<String, String> playerPools = this.lastDimensionInPool.get( playerUUID );
+        if ( playerPools != null )
+        {
+            for ( final Map.Entry<String, String> entry : playerPools.entrySet() )
+            {
+                poolDims.addProperty( entry.getKey(), entry.getValue() );
+            }
+        }
+        root.add( "lastDimensionInPool", poolDims );
 
         final Path file = this.saveDirectory.resolve( playerUUID + ".json" );
         try ( final Writer writer = new OutputStreamWriter(
