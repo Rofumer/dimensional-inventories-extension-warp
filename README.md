@@ -13,14 +13,21 @@ When a player warps to a pool, they are returned to the exact dimension, coordin
 
 ## Commands
 
-All commands require permission level 4 (operator).
+| Command | Permission node | Default |
+|---|---|---|
+| `/warp <pool>` | `diminv.warp.self` | OP level 4 |
+| `/warp player <player> <pool>` | `diminv.warp.others` | OP level 4 |
+| `/diminv warp <pool>` | `diminv.warp.self` | OP level 4 |
+| `/diminv warp player <player> <pool>` | `diminv.warp.others` | OP level 4 |
 
-| Command | Description |
-|---|---|
-| `/warp <pool>` | Teleport yourself to a pool |
-| `/warp player <player> <pool>` | Teleport another player to a pool |
-| `/diminv warp <pool>` | Same as above, under the main mod's command tree |
-| `/diminv warp player <player> <pool>` | Same as above, under the main mod's command tree |
+Permission nodes are checked via [Fabric Permissions API](https://github.com/lucko/fabric-permissions-api), which is bundled in the mod jar. With [LuckPerms](https://luckperms.net/) installed, you can grant nodes to non-operators:
+
+```
+/lp group vip permission set diminv.warp.self true
+/lp group admin permission set diminv.warp.others true
+```
+
+Without a permissions mod, both nodes fall back to operator level 4.
 
 The `<pool>` argument accepts any pool ID configured in Dimensional Inventories. It is autocompleted from the live pool list.
 

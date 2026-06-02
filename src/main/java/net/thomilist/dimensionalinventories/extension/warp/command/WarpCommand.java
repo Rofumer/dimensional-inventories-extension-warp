@@ -25,6 +25,7 @@ import net.thomilist.dimensionalinventories.module.builtin.pool.DimensionPool;
 import net.thomilist.dimensionalinventories.module.builtin.pool.DimensionPoolConfigModule;
 import net.thomilist.dimensionalinventories.module.builtin.pool.DimensionPoolConfigModuleState;
 import net.thomilist.dimensionalinventories.extension.warp.WarpPositionStore;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 
 import java.util.Collection;
 import java.util.List;
@@ -55,14 +56,14 @@ public class WarpCommand
     private void register( final CommandDispatcher<CommandSourceStack> dispatcher )
     {
         final var warpNode = literal( "warp" )
-            .requires( net.minecraft.commands.Commands.hasPermission(
-                net.minecraft.commands.Commands.LEVEL_OWNERS ) )
             // warp <pool>  — warp self to pool
             .then( argument( ARG_POOL, StringArgumentType.word() )
+                .requires( Permissions.require( "diminv.warp.self", 4 ) )
                 .suggests( ( ctx, builder ) -> { poolIds().forEach( builder::suggest ); return builder.buildFuture(); } )
                 .executes( this::warpSelf ) )
             // warp player <player> <pool>  — warp another player to pool
             .then( literal( "player" )
+                .requires( Permissions.require( "diminv.warp.others", 4 ) )
                 .then( argument( ARG_PLAYER, players() )
                     .then( argument( ARG_POOL, StringArgumentType.word() )
                         .suggests( ( ctx, builder ) -> { poolIds().forEach( builder::suggest ); return builder.buildFuture(); } )

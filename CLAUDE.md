@@ -19,6 +19,7 @@ The companion extension to study for patterns is [dimensional-inventories-extens
 | Gradle | 9.5.1 | |
 | Dimensional Inventories | 2.2.1+26.1 | Main mod; loaded from Modrinth or local `../dimensional-inventories/build/libs/` |
 | Gson | — | Transitive from main mod; used for JSON persistence |
+| Fabric Permissions API | 0.7.0 | Bundled via JiJ; enables LuckPerms node checks with OP-4 fallback |
 
 ## Build quirks for MC 26.1 / Loom 1.16
 
@@ -91,8 +92,8 @@ Old format (positions at root level, no `positions` wrapper) is loaded for backw
 Both trees share the same Brigadier node (no logic duplication):
 
 ```
-/warp <pool>                          — teleport self to a pool (permission level 4)
-/warp player <player> <pool>          — teleport another player to a pool
+/warp <pool>                          — warp self (permission: diminv.warp.self, default OP 4)
+/warp player <player> <pool>          — warp another player (permission: diminv.warp.others, default OP 4)
 /diminv warp <pool>                   — same, merged into main mod's /diminv tree
 /diminv warp player <player> <pool>
 ```
@@ -100,6 +101,8 @@ Both trees share the same Brigadier node (no logic duplication):
 `<pool>` is a pool ID from Dimensional Inventories config (string, autocompleted from live pool list).
 On warp to pool: teleports to the last dimension the player was in within that pool, or falls back to the
 first dimension in the pool (sorted). Fails if the player is already in a dimension belonging to that pool.
+
+Permissions are checked via Fabric Permissions API (bundled via JiJ). Falls back to OP level 4 without a permissions mod.
 
 ## Main mod API surface used
 

@@ -68,6 +68,8 @@ repositories {
 		name = "Modrinth"
 		url = "https://api.modrinth.com/maven"
 	}
+
+	mavenCentral()
 }
 
 dependencies {
@@ -89,6 +91,12 @@ dependencies {
 	{
 		implementation ":dimensional-inventories:${project.dimensional_inventories_version}"
 	}
+
+	// Fabric Permissions API — bridges Fabric commands with LuckPerms and similar mods.
+	// Bundled via JiJ so servers don't need to install it separately.
+	def permsApi = "me.lucko:fabric-permissions-api:${project.fabric_permissions_api_version}"
+	implementation permsApi
+	include permsApi
 }
 
 tasks.withType(ProcessResources).configureEach {
