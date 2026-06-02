@@ -1,0 +1,143 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+def targetJavaVersion = Integer.parseInt(project.target_java_version)
+def javaVersionString = "JAVA_" + targetJavaVersion.toString()
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+def interactiveRunPath = "run/interactive"
+def interactiveServerRunPath = interactiveRunPath + "/server"
+def interactiveClientRunPath = interactiveRunPath + "/client"
+
+
+loom {
+	splitEnvironmentSourceSets()
+}
+
+loom {
+	mods {
+		"dimensional-inventories-extension-warp" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+
+	runs {
+		server {
+			runDir(interactiveServerRunPath)
+		}
+
+		client {
+			runDir(interactiveClientRunPath)
+		}
+	}
+}
+
+tasks.register("acceptInteractiveServerEula") {
+	doLast {
+		mkdir(interactiveServerRunPath)
+		new File(interactiveServerRunPath, "eula.txt").text = "eula=true"
+	}
+}
+
+runClient.configure {
+	dependsOn(build)
+}
+
+runServer.configure {
+	dependsOn(build)
+	dependsOn(acceptInteractiveServerEula)
+}
+
+repositories {
+	// For development against local, unpublished versions.
+	flatDir {
+		name = "Dimensional Inventories (local)"
+		dirs = ["../dimensional-inventories/build/libs"]
+	}
+
+	maven {
+		name = "Modrinth"
+		url = "https://api.modrinth.com/maven"
+	}
+}
+
+dependencies {
+	// To change the versions see the gradle.properties file.
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// Fabric API.
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Dimensional Inventories.
+	// Check online Modrinth Maven repository first.
+	try
+	{
+		implementation "maven.modrinth:dimensional-inventories:${project.dimensional_inventories_version}"
+	}
+	// If not found on Modrinth, check local directory for unpublished versions.
+	catch (Exception ignored)
+	{
+		implementation ":dimensional-inventories:${project.dimensional_inventories_version}"
+	}
+}
+
+tasks.withType(ProcessResources).configureEach {
+	inputs.property("java_version", target_java_version)
+	inputs.property("version", project.version)
+	inputs.property("minecraft_version", minecraft_version)
+	inputs.property("loader_version", loader_version)
+	inputs.property("dimensional_inventories_version", dimensional_inventories_version)
+	filteringCharset = "UTF-8"
+
+	filesMatching("fabric.mod.json") {
+		expand "java_version": target_java_version,
+				"version": project.version,
+				"minecraft_version": minecraft_version,
+				"loader_version": loader_version,
+				"dimensional_inventories_version": dimensional_inventories_version
+	}
+
+	filesMatching("*.mixins.json") {
+		expand "java_version": javaVersionString
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.encoding = "UTF-8"
+	if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+		it.options.release.set(targetJavaVersion)
+	}
+}
+
+java {
+	def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+	if (JavaVersion.current() < javaVersion) {
+		toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+	}
+	withSourcesJar()
+}
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_${base.archivesName.get()}" }
+	}
+}
+
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			artifactId = base.archivesName
+			from components.java
+		}
+	}
+}

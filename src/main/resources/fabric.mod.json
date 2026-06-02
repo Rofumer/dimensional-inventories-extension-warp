@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "dimensional-inventories-extension-warp",
+  "version": "${version}",
+
+  "name": "Dimensional Inventories Extension: Warp",
+  "description": "An extension for Dimensional Inventories adding a /diminv warp command to teleport players between dimensions.",
+  "authors": [
+    "Thomilist"
+  ],
+  "contact": {
+    "sources": "https://github.com/thomilist/dimensional-inventories-extension-warp/"
+  },
+
+  "license": "MIT",
+  "icon": "assets/dimensional-inventories-extension-warp/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "net.thomilist.dimensionalinventories.extension.warp.client.DimensionalInventoriesExtensionWarpClient"
+    ],
+    "main": [
+      "net.thomilist.dimensionalinventories.extension.warp.DimensionalInventoriesExtensionWarp"
+    ]
+  },
+  "mixins": [
+    "dimensional-inventories-extension-warp.mixins.json",
+    {
+      "config": "dimensional-inventories-extension-warp.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=${java_version}",
+    "dimensional-inventories": ">=${dimensional_inventories_version}"
+  }
+}

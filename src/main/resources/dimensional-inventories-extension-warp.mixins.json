@@ -1,0 +1,10 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.thomilist.dimensionalinventories.extension.warp.mixin",
+  "compatibilityLevel": "${java_version}",
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
