@@ -15,8 +15,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
+import net.thomilist.dimensionalinventories.extension.warp.WarpPositionStore;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -27,6 +29,13 @@ public class WarpCommand
 {
     private static final String ARG_DIMENSION = "dimension";
     private static final String ARG_PLAYER = "player";
+
+    private final WarpPositionStore positionStore;
+
+    public WarpCommand( final WarpPositionStore positionStore )
+    {
+        this.positionStore = positionStore;
+    }
 
     public void register()
     {
@@ -112,17 +121,40 @@ public class WarpCommand
 
     private void teleport( final ServerPlayer player, final ServerLevel target )
     {
-        final BlockPos spawnPos = target.getRespawnData().pos();
-        final double x = spawnPos.getX() + 0.5;
-        final double y = target.getHeight( Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawnPos.getX(), spawnPos.getZ() );
-        final double z = spawnPos.getZ() + 0.5;
+        // Snapshot exact position right now so AFTER_PLAYER_CHANGE_LEVEL gets accurate origin coords
+        this.positionStore.snapshotPlayer( player );
+
+        final Optional<WarpPositionStore.PositionRecord> stored =
+            this.positionStore.get( player.getUUID(), target.dimension() );
+
+        final double x, y, z;
+        final float yRot, xRot;
+
+        if ( stored.isPresent() )
+        {
+            x    = stored.get().x();
+            y    = stored.get().y();
+            z    = stored.get().z();
+            yRot = stored.get().yRot();
+            xRot = stored.get().xRot();
+        }
+        else
+        {
+            // No recorded position — fall back to world spawn
+            final BlockPos spawn = target.getRespawnData().pos();
+            x    = spawn.getX() + 0.5;
+            y    = target.getHeight( Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn.getX(), spawn.getZ() );
+            z    = spawn.getZ() + 0.5;
+            yRot = player.getYRot();
+            xRot = 0.0f;
+        }
 
         player.teleport( new TeleportTransition(
             target,
             new Vec3( x, y, z ),
             Vec3.ZERO,
-            player.getYRot(),
-            player.getXRot(),
+            yRot,
+            xRot,
             TeleportTransition.DO_NOTHING
         ) );
     }
