@@ -205,11 +205,21 @@ public class WarpCommand
         }
         else
         {
-            // No recorded position — fall back to world spawn
-            final BlockPos spawn = target.getRespawnData().pos();
-            x    = spawn.getX() + 0.5;
-            y    = target.getHeight( Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawn.getX(), spawn.getZ() );
-            z    = spawn.getZ() + 0.5;
+            // No recorded position — fall back to world spawn projected onto the surface.
+            // getRespawnData() is non-null in practice but the contract is abstract, so guard it.
+            final var respawnData = target.getRespawnData();
+            final BlockPos spawnPos = respawnData != null ? respawnData.pos() : BlockPos.ZERO;
+
+            // getHeight(MOTION_BLOCKING_NO_LEAVES) returns the first free Y above the highest
+            // solid (non-leaf) block — i.e. the Y the player should stand at.
+            // It returns getMinY() when the chunk is not yet generated; fall back to
+            // spawn's own Y + 1 in that case so the player doesn't end up underground.
+            final int surfaceY = target.getHeight(
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawnPos.getX(), spawnPos.getZ() );
+
+            x    = spawnPos.getX() + 0.5;
+            y    = surfaceY > target.getMinY() ? surfaceY : spawnPos.getY() + 1;
+            z    = spawnPos.getZ() + 0.5;
             yRot = player.getYRot();
             xRot = 0.0f;
         }
