@@ -46,6 +46,7 @@ Each player's last known state in every pool is remembered and persisted to disk
 
 - **Pool dimension tracking:** when a player leaves a dimension, the mod records which dimension within that pool they were in. On the next warp to that pool, they are returned to that same dimension.
 - **Coordinates:** positions are recorded whenever a player leaves a dimension — whether through a portal, the `/warp` command, or any other means. On warp, the player is returned to their last coordinates and camera angle in the target dimension.
+- **Creative pool Y override:** if the target pool has `gameMode: creative` in its Dimensional Inventories config, the player always arrives at Y=100 (X and Z are still restored from memory).
 - **Fallback:** if the player has never visited a pool before, they are teleported to the first dimension in that pool at world spawn.
 - **Storage:** one JSON file per player at `<world>/dimensional-inventories-extension-warp/<uuid>.json`. Data survives server restarts.
 

@@ -72,6 +72,8 @@ src/
 
 On warp to pool: look up `lastDimensionInPool[poolId]` → teleport to that dimension at last known coordinates. If no record, use first dimension in pool at world spawn.
 
+If the pool's `gameMode` is `GameType.CREATIVE`, Y is overridden to `100.0` regardless of the stored value; X, Z, and rotation are restored normally.
+
 ### JSON save format (v2)
 
 ```json

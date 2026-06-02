@@ -15,6 +15,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.portal.TeleportTransition;
@@ -173,7 +174,7 @@ public class WarpCommand
             return -1;
         }
 
-        this.teleport( player, targetLevel );
+        this.teleport( player, targetLevel, pool );
 
         if ( sendSuccess )
         {
@@ -184,7 +185,7 @@ public class WarpCommand
         return Command.SINGLE_SUCCESS;
     }
 
-    private void teleport( final ServerPlayer player, final ServerLevel target )
+    private void teleport( final ServerPlayer player, final ServerLevel target, final DimensionPool pool )
     {
         // Snapshot exact position right now so AFTER_PLAYER_CHANGE_LEVEL gets accurate origin coords
         this.positionStore.snapshotPlayer( player );
@@ -198,7 +199,7 @@ public class WarpCommand
         if ( stored.isPresent() )
         {
             x    = stored.get().x();
-            y    = stored.get().y();
+            y    = pool.getGameMode() == GameType.CREATIVE ? 100.0 : stored.get().y();
             z    = stored.get().z();
             yRot = stored.get().yRot();
             xRot = stored.get().xRot();
