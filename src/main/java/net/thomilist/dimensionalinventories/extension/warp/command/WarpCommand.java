@@ -247,22 +247,19 @@ public class WarpCommand
             xRot = 0.0f;
         }
 
+        // Mark the player as warping BEFORE the teleport call. The UUID is removed in
+        // AFTER_PLAYER_CHANGE_LEVEL (registered in DimensionalInventoriesExtensionWarp)
+        // because player.teleport() schedules the dimension change asynchronously — a
+        // finally block here would clear the flag before YAWP's ON_FLAG_RESULT fires.
         this.warpingPlayers.add( player.getUUID() );
-        try
-        {
-            player.teleport( new TeleportTransition(
-                target,
-                new Vec3( x, y, z ),
-                Vec3.ZERO,
-                yRot,
-                xRot,
-                TeleportTransition.DO_NOTHING
-            ) );
-        }
-        finally
-        {
-            this.warpingPlayers.remove( player.getUUID() );
-        }
+        player.teleport( new TeleportTransition(
+            target,
+            new Vec3( x, y, z ),
+            Vec3.ZERO,
+            yRot,
+            xRot,
+            TeleportTransition.DO_NOTHING
+        ) );
     }
 
     private static Optional<DimensionPoolConfigModuleState> poolConfig()

@@ -54,6 +54,10 @@ public class DimensionalInventoriesExtensionWarp
         ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register(
             ( player, origin, destination ) ->
             {
+                // Clear the warp-in-progress marker now that the dimension change has landed;
+                // this is the earliest safe point — YAWP's ON_FLAG_RESULT fires before this.
+                warpingPlayers.remove( player.getUUID() );
+
                 this.positionStore.onPlayerChangedDimension( player, origin );
 
                 final String originDimId = origin.dimension().identifier().toString();
