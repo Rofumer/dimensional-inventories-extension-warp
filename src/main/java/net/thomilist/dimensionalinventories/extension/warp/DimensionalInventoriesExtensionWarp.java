@@ -5,11 +5,16 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.thomilist.dimensionalinventories.DimensionalInventories;
 import net.thomilist.dimensionalinventories.exception.ModuleNotRegisteredException;
 import net.thomilist.dimensionalinventories.extension.warp.command.WarpCommand;
 import net.thomilist.dimensionalinventories.module.builtin.pool.DimensionPoolConfigModule;
 import net.thomilist.dimensionalinventories.util.ModProperties;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 public class DimensionalInventoriesExtensionWarp
     implements ModInitializer
@@ -21,6 +26,13 @@ public class DimensionalInventoriesExtensionWarp
     @Override
     public void onInitialize()
     {
+        final Set<UUID> warpingPlayers = new HashSet<>();
+
+        if ( FabricLoader.getInstance().isModLoaded( "yawp" ) )
+        {
+            YawpCompat.register( warpingPlayers );
+        }
+
         ServerLifecycleEvents.SERVER_STARTED.register( server ->
             this.positionStore.onServerStarted( server ) );
 
@@ -57,6 +69,6 @@ public class DimensionalInventoriesExtensionWarp
                 catch ( final ModuleNotRegisteredException ignored ) { }
             } );
 
-        new WarpCommand( this.positionStore ).register();
+        new WarpCommand( this.positionStore, warpingPlayers ).register();
     }
 }

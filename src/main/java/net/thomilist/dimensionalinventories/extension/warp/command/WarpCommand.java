@@ -31,6 +31,8 @@ import me.lucko.fabric.api.permissions.v0.Permissions;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -42,10 +44,12 @@ public class WarpCommand
     private static final String ARG_PLAYER = "player";
 
     private final WarpPositionStore positionStore;
+    private final Set<UUID> warpingPlayers;
 
-    public WarpCommand( final WarpPositionStore positionStore )
+    public WarpCommand( final WarpPositionStore positionStore, final Set<UUID> warpingPlayers )
     {
         this.positionStore = positionStore;
+        this.warpingPlayers = warpingPlayers;
     }
 
     public void register()
@@ -151,6 +155,24 @@ public class WarpCommand
             return -1;
         }
 
+        // Fail if the player's current game mode doesn't match the required mode of their current pool
+        final Optional<DimensionPool> sourcePoolOpt = config.dimensionPools.values().stream()
+            .filter( p -> p.getDimensions().contains( currentDimId ) )
+            .findFirst();
+        if ( sourcePoolOpt.isPresent() )
+        {
+            final GameType requiredMode = sourcePoolOpt.get().getGameMode();
+            final GameType playerMode = player.gameMode.getGameModeForPlayer();
+            if ( requiredMode != null && playerMode != requiredMode )
+            {
+                final String name = player.getName().getString();
+                source.sendFailure( Component.literal(
+                    ( isSelf( source, player ) ? "You must" : "'" + name + "' must" ) +
+                    " be in " + requiredMode.getSerializedName() + " mode to warp from this pool" ) );
+                return -1;
+            }
+        }
+
         // Determine the target dimension: last remembered for this pool, or first dimension as fallback
         final Optional<String> lastDim = this.positionStore.getLastDimensionInPool( player.getUUID(), poolId );
         final String targetDimId;
@@ -225,14 +247,22 @@ public class WarpCommand
             xRot = 0.0f;
         }
 
-        player.teleport( new TeleportTransition(
-            target,
-            new Vec3( x, y, z ),
-            Vec3.ZERO,
-            yRot,
-            xRot,
-            TeleportTransition.DO_NOTHING
-        ) );
+        this.warpingPlayers.add( player.getUUID() );
+        try
+        {
+            player.teleport( new TeleportTransition(
+                target,
+                new Vec3( x, y, z ),
+                Vec3.ZERO,
+                yRot,
+                xRot,
+                TeleportTransition.DO_NOTHING
+            ) );
+        }
+        finally
+        {
+            this.warpingPlayers.remove( player.getUUID() );
+        }
     }
 
     private static Optional<DimensionPoolConfigModuleState> poolConfig()

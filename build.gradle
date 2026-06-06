@@ -97,6 +97,10 @@ dependencies {
 	def permsApi = "me.lucko:fabric-permissions-api:${project.fabric_permissions_api_version}"
 	implementation permsApi
 	include permsApi
+
+	// YAWP (Yet Another World Protector) — optional; compile-only so our mod runs without it.
+	// At runtime we check FabricLoader.isModLoaded("yawp") before touching any YAWP classes.
+	compileOnly "maven.modrinth:yawp:${project.yawp_version}"
 }
 
 tasks.withType(ProcessResources).configureEach {

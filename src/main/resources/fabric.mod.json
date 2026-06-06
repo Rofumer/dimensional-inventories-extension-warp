@@ -38,5 +38,9 @@
     "minecraft": "~${minecraft_version}",
     "java": ">=${java_version}",
     "dimensional-inventories": ">=${dimensional_inventories_version}"
+  },
+
+  "suggests": {
+    "yawp": "*"
   }
 }
