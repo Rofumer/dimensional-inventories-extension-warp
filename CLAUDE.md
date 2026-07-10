@@ -4,7 +4,7 @@ Full context for AI-assisted development of this project.
 
 ## What this project is
 
-A Fabric mod extension for [Dimensional Inventories](https://github.com/Thomilist/dimensional-inventories/tree/26.1) targeting **Minecraft 26.1.2** (Java 25). It adds `/warp` and `/diminv warp` commands that teleport players between dimensions, returning them to their last known position in that dimension.
+A Fabric mod extension for [Dimensional Inventories](https://github.com/Thomilist/dimensional-inventories/tree/26.1) targeting **Minecraft 26.2** (Java 25). It adds `/warp` and `/diminv warp` commands that teleport players between dimensions, returning them to their last known position in that dimension.
 
 The companion extension to study for patterns is [dimensional-inventories-extension-trinkets](https://github.com/Thomilist/dimensional-inventories-extension-trinkets/tree/1.21.1) (targets MC 1.21.1, so some APIs differ).
 
@@ -12,12 +12,12 @@ The companion extension to study for patterns is [dimensional-inventories-extens
 
 | Dependency | Version | Notes |
 |---|---|---|
-| Minecraft | 26.1.2 | Uses Mojang official mappings (no `mappings` line in build.gradle) |
-| Fabric Loader | 0.19.2 | |
-| Fabric API | 0.148.2+26.1.2 | |
-| Fabric Loom | 1.16.3 | SNAPSHOT resolves to 1.16.3 |
+| Minecraft | 26.2 | Uses Mojang official mappings (no `mappings` line in build.gradle) |
+| Fabric Loader | 0.19.3 | |
+| Fabric API | 0.154.2+26.2 | |
+| Fabric Loom | 1.17 | SNAPSHOT resolves to latest 1.17.x |
 | Gradle | 9.5.1 | |
-| Dimensional Inventories | 2.2.1+26.1 | Main mod; loaded from Modrinth or local `../dimensional-inventories/build/libs/` |
+| Dimensional Inventories | 2.2.1+26.2 | Main mod; loaded from Modrinth or local `../dimensional-inventories/build/libs/` |
 | Gson | — | Transitive from main mod; used for JSON persistence |
 | Fabric Permissions API | 0.7.0 | Bundled via JiJ; enables LuckPerms node checks with OP-4 fallback |
 

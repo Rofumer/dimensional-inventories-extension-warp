@@ -6,10 +6,10 @@ When a player warps to a pool, they are returned to the exact dimension, coordin
 
 ## Requirements
 
-- Minecraft 26.1.x
-- [Fabric Loader](https://fabricmc.net/) 0.19.2+
+- Minecraft 26.2.x
+- [Fabric Loader](https://fabricmc.net/) 0.19.3+
 - [Fabric API](https://modrinth.com/mod/fabric-api)
-- [Dimensional Inventories](https://modrinth.com/mod/dimensional-inventories) 2.2.1+26.1
+- [Dimensional Inventories](https://modrinth.com/mod/dimensional-inventories) 2.2.1+26.2
 
 ## Commands
 
